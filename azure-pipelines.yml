@@ -1,0 +1,251 @@
+# Azure DevOps Multi-Stage Terraform Pipeline with Parameters
+# Workflow matching DAG: [tflint, tfsec, Infracost, Gitleaks] -> Init&Validate -> Plan -> Manual Approval -> Apply
+
+parameters:
+  - name: agentPool
+    displayName: "Agent Pool Name"
+    type: string
+    default: "Ranjan_PG_Pool"
+
+  - name: subscriptionId
+    displayName: "Azure Subscription ID"
+    type: string
+    default: "191839a3-3fe2-4852-b995-88a675fc1f7f"
+
+  - name: tenantId
+    displayName: "Azure Tenant ID"
+    type: string
+    default: "2cfb7c24-f877-4676-87a8-f491f977718e"
+
+  - name: clientId
+    displayName: "Azure Client ID"
+    type: string
+    default: "df0cc644-f741-4a9a-a207-8d96d05204fb"
+
+  - name: clientSecret
+    displayName: "Azure Client Secret"
+    type: string
+    default: "$(CLIENT_SECRET)"
+
+  - name: storageResourceGroup
+    displayName: "Storage Resource Group Name"
+    type: string
+    default: "B18_G2_RG"
+
+  - name: storageAccountName
+    displayName: "Storage Account Name"
+    type: string
+    default: "b18g2storage"
+
+  - name: containerName
+    displayName: "Container Name"
+    type: string
+    default: "b18g2container"
+
+  - name: tfstateKey
+    displayName: "Terraform State Key"
+    type: string
+    default: "terraform.tfstate"
+
+  - name: workingDirectory
+    displayName: "Working Directory"
+    type: string
+    default: "Parent-Moudle"
+
+trigger:
+  branches:
+    include:
+      - main
+      - feature/*
+      - feature-*
+
+pr:
+  branches:
+    include:
+      - main
+
+pool:
+  name: ${{ parameters.agentPool }}
+
+variables:
+  ARM_CLIENT_ID: ${{ parameters.clientId }}
+  ARM_CLIENT_SECRET: ${{ parameters.clientSecret }}
+  ARM_TENANT_ID: ${{ parameters.tenantId }}
+  ARM_SUBSCRIPTION_ID: ${{ parameters.subscriptionId }}
+
+stages:
+  # -------------------------------------------------------------
+  # STAGE 1: tflint
+  # -------------------------------------------------------------
+  - stage: tflint
+    displayName: "tflint"
+    jobs:
+      - job: tflint_job
+        displayName: "Run TFLint Scan"
+        steps:
+          - script: |
+              echo "Starting TFLint Scan..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              if ! command -v tflint &> /dev/null; then
+                echo "Installing tflint..."
+                curl -s https://raw.githubusercontent.com/terraform-linters/tflint/master/install_linux.sh | bash || true
+              fi
+              tflint --init || true
+              tflint || echo "TFLint completed with warnings"
+            displayName: "Execute tflint"
+
+  # -------------------------------------------------------------
+  # STAGE 2: tfsec
+  # -------------------------------------------------------------
+  - stage: tfsec
+    displayName: "tfsec"
+    jobs:
+      - job: tfsec_job
+        displayName: "Run TFSec Security Scan"
+        steps:
+          - script: |
+              echo "Starting TFSec Scan..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              if ! command -v tfsec &> /dev/null; then
+                echo "Installing tfsec..."
+                curl -s https://raw.githubusercontent.com/aquasecurity/tfsec/master/scripts/install_linux.sh | bash || true
+              fi
+              tfsec . || echo "tfsec completed with findings"
+            displayName: "Execute tfsec"
+
+  # -------------------------------------------------------------
+  # STAGE 3: Infracost
+  # -------------------------------------------------------------
+  - stage: Infracost
+    displayName: "Infracost"
+    jobs:
+      - job: infracost_job
+        displayName: "Run Infracost Cost Analysis"
+        steps:
+          - script: |
+              echo "Starting Infracost Scan..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              if ! command -v infracost &> /dev/null; then
+                echo "Installing infracost..."
+                curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh || true
+              fi
+              infracost breakdown --path . || echo "Infracost completed"
+            displayName: "Execute Infracost"
+
+  # -------------------------------------------------------------
+  # STAGE 4: Gitleaks
+  # -------------------------------------------------------------
+  - stage: Gitleaks
+    displayName: "Gitleaks"
+    jobs:
+      - job: gitleaks_job
+        displayName: "Run Gitleaks Secret Scan"
+        steps:
+          - script: |
+              echo "Starting Gitleaks Scan..."
+              cd $(Build.SourcesDirectory)
+              if ! command -v gitleaks &> /dev/null; then
+                echo "Installing gitleaks..."
+                curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.18.1/gitleaks_8.18.1_linux_x64.tar.gz | tar -xz -C /tmp || true
+                sudo mv /tmp/gitleaks /usr/local/bin/ || true
+              fi
+              gitleaks detect --source=. --verbose || echo "Gitleaks scan completed"
+            displayName: "Execute Gitleaks"
+
+  # -------------------------------------------------------------
+  # STAGE 5: Init&Validate
+  # -------------------------------------------------------------
+  - stage: Init_Validate
+    displayName: "Init&Validate"
+    dependsOn:
+      - tflint
+      - tfsec
+      - Infracost
+      - Gitleaks
+    condition: succeededOrFailed()
+    jobs:
+      - job: init_validate_job
+        displayName: "Terraform Init & Validate"
+        steps:
+          - script: |
+              echo "Initializing Terraform backend and validating configurations..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              terraform init \
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
+                -backend-config="container_name=${{ parameters.containerName }}" \
+                -backend-config="key=${{ parameters.tfstateKey }}" \
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
+                -backend-config="tenant_id=${{ parameters.tenantId }}" \
+                -backend-config="client_id=${{ parameters.clientId }}" \
+                -backend-config="client_secret=${{ parameters.clientSecret }}"
+              terraform validate
+            displayName: "Terraform Init and Validate"
+
+  # -------------------------------------------------------------
+  # STAGE 6: Plan
+  # -------------------------------------------------------------
+  - stage: Plan
+    displayName: "Plan"
+    dependsOn: Init_Validate
+    jobs:
+      - job: plan_job
+        displayName: "Terraform Plan"
+        steps:
+          - script: |
+              echo "Executing Terraform Plan..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              terraform init \
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
+                -backend-config="container_name=${{ parameters.containerName }}" \
+                -backend-config="key=${{ parameters.tfstateKey }}" \
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
+                -backend-config="tenant_id=${{ parameters.tenantId }}" \
+                -backend-config="client_id=${{ parameters.clientId }}" \
+                -backend-config="client_secret=${{ parameters.clientSecret }}"
+              terraform plan -out=tfplan
+            displayName: "Terraform Plan Execution"
+
+  # -------------------------------------------------------------
+  # STAGE 7: Manual Approval
+  # -------------------------------------------------------------
+  - stage: Manual_Approval
+    displayName: "Manual Approval"
+    dependsOn: Plan
+    jobs:
+      - job: manual_approval_job
+        displayName: "Manual Approval Gate"
+        pool: server
+        steps:
+          - task: ManualValidation@0
+            inputs:
+              notifyUsers: ''
+              instructions: 'Please review the terraform plan output and approve to proceed with Apply stage.'
+              onTimeout: 'reject'
+
+  # -------------------------------------------------------------
+  # STAGE 8: Apply (Triggers on main branch)
+  # -------------------------------------------------------------
+  - stage: Apply
+    displayName: "Apply"
+    dependsOn: Manual_Approval
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: apply_job
+        displayName: "Terraform Apply"
+        steps:
+          - script: |
+              echo "Executing Terraform Apply on main branch..."
+              cd $(Build.SourcesDirectory)/${{ parameters.workingDirectory }}
+              terraform init \
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
+                -backend-config="container_name=${{ parameters.containerName }}" \
+                -backend-config="key=${{ parameters.tfstateKey }}" \
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
+                -backend-config="tenant_id=${{ parameters.tenantId }}" \
+                -backend-config="client_id=${{ parameters.clientId }}" \
+                -backend-config="client_secret=${{ parameters.clientSecret }}"
+              terraform apply -auto-approve
+            displayName: "Terraform Apply Execution"
