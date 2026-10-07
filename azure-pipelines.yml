@@ -83,15 +83,15 @@ stages:
       - job: tflint_job
         displayName: "Run TFLint Scan"
         steps:
-          - bash: |
-              echo "Starting TFLint Scan..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              if command -v tflint &> /dev/null; then
-                tflint --init || true
-                tflint || echo "TFLint completed with findings"
-              else
-                echo "tflint is not installed on agent. Skipping scan step..."
-              fi
+          - powershell: |
+              Write-Host "Starting TFLint Scan..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              if (Get-Command tflint -ErrorAction SilentlyContinue) {
+                  tflint --init
+                  tflint
+              } else {
+                  Write-Host "tflint is not installed on agent. Skipping scan step..."
+              }
             displayName: "Execute tflint"
 
   # -------------------------------------------------------------
@@ -103,14 +103,14 @@ stages:
       - job: tfsec_job
         displayName: "Run TFSec Security Scan"
         steps:
-          - bash: |
-              echo "Starting TFSec Scan..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              if command -v tfsec &> /dev/null; then
-                tfsec . || echo "tfsec completed with findings"
-              else
-                echo "tfsec is not installed on agent. Skipping scan step..."
-              fi
+          - powershell: |
+              Write-Host "Starting TFSec Scan..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              if (Get-Command tfsec -ErrorAction SilentlyContinue) {
+                  tfsec .
+              } else {
+                  Write-Host "tfsec is not installed on agent. Skipping scan step..."
+              }
             displayName: "Execute tfsec"
 
   # -------------------------------------------------------------
@@ -122,14 +122,14 @@ stages:
       - job: infracost_job
         displayName: "Run Infracost Cost Analysis"
         steps:
-          - bash: |
-              echo "Starting Infracost Scan..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              if command -v infracost &> /dev/null; then
-                infracost breakdown --path . || echo "Infracost completed"
-              else
-                echo "infracost is not installed on agent. Skipping cost analysis step..."
-              fi
+          - powershell: |
+              Write-Host "Starting Infracost Scan..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              if (Get-Command infracost -ErrorAction SilentlyContinue) {
+                  infracost breakdown --path .
+              } else {
+                  Write-Host "infracost is not installed on agent. Skipping cost analysis step..."
+              }
             displayName: "Execute Infracost"
 
   # -------------------------------------------------------------
@@ -141,14 +141,14 @@ stages:
       - job: gitleaks_job
         displayName: "Run Gitleaks Secret Scan"
         steps:
-          - bash: |
-              echo "Starting Gitleaks Scan..."
-              cd "$(Build.SourcesDirectory)" || exit 1
-              if command -v gitleaks &> /dev/null; then
-                gitleaks detect --source=. --verbose || echo "Gitleaks scan completed"
-              else
-                echo "gitleaks is not installed on agent. Skipping secret scan step..."
-              fi
+          - powershell: |
+              Write-Host "Starting Gitleaks Scan..."
+              Set-Location "$(Build.SourcesDirectory)"
+              if (Get-Command gitleaks -ErrorAction SilentlyContinue) {
+                  gitleaks detect --source=. --verbose
+              } else {
+                  Write-Host "gitleaks is not installed on agent. Skipping secret scan step..."
+              }
             displayName: "Execute Gitleaks"
 
   # -------------------------------------------------------------
@@ -166,18 +166,22 @@ stages:
       - job: init_validate_job
         displayName: "Terraform Init & Validate"
         steps:
-          - bash: |
-              echo "Initializing Terraform backend and validating configurations..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              terraform init \
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
-                -backend-config="container_name=${{ parameters.containerName }}" \
-                -backend-config="key=${{ parameters.tfstateKey }}" \
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
-                -backend-config="tenant_id=${{ parameters.tenantId }}" \
-                -backend-config="client_id=${{ parameters.clientId }}" \
-                -backend-config="client_secret=${{ parameters.clientSecret }}"
+          - powershell: |
+              Write-Host "Initializing Terraform backend and validating configurations..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              $env:ARM_CLIENT_ID="${{ parameters.clientId }}"
+              $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
+              $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
+              $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
+              terraform init `
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                -backend-config="container_name=${{ parameters.containerName }}" `
+                -backend-config="key=${{ parameters.tfstateKey }}" `
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                -backend-config="client_id=${{ parameters.clientId }}" `
+                -backend-config="client_secret=$(CLIENT_SECRET)"
               terraform validate
             displayName: "Terraform Init and Validate"
 
@@ -191,18 +195,22 @@ stages:
       - job: plan_job
         displayName: "Terraform Plan"
         steps:
-          - bash: |
-              echo "Executing Terraform Plan..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              terraform init \
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
-                -backend-config="container_name=${{ parameters.containerName }}" \
-                -backend-config="key=${{ parameters.tfstateKey }}" \
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
-                -backend-config="tenant_id=${{ parameters.tenantId }}" \
-                -backend-config="client_id=${{ parameters.clientId }}" \
-                -backend-config="client_secret=${{ parameters.clientSecret }}"
+          - powershell: |
+              Write-Host "Executing Terraform Plan..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              $env:ARM_CLIENT_ID="${{ parameters.clientId }}"
+              $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
+              $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
+              $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
+              terraform init `
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                -backend-config="container_name=${{ parameters.containerName }}" `
+                -backend-config="key=${{ parameters.tfstateKey }}" `
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                -backend-config="client_id=${{ parameters.clientId }}" `
+                -backend-config="client_secret=$(CLIENT_SECRET)"
               terraform plan -out=tfplan
             displayName: "Terraform Plan Execution"
 
@@ -234,17 +242,21 @@ stages:
       - job: apply_job
         displayName: "Terraform Apply"
         steps:
-          - bash: |
-              echo "Executing Terraform Apply on main branch..."
-              cd "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}" || exit 1
-              terraform init \
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" \
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" \
-                -backend-config="container_name=${{ parameters.containerName }}" \
-                -backend-config="key=${{ parameters.tfstateKey }}" \
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" \
-                -backend-config="tenant_id=${{ parameters.tenantId }}" \
-                -backend-config="client_id=${{ parameters.clientId }}" \
-                -backend-config="client_secret=${{ parameters.clientSecret }}"
+          - powershell: |
+              Write-Host "Executing Terraform Apply on main branch..."
+              Set-Location "$(Build.SourcesDirectory)/${{ parameters.workingDirectory }}"
+              $env:ARM_CLIENT_ID="${{ parameters.clientId }}"
+              $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
+              $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
+              $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
+              terraform init `
+                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                -backend-config="container_name=${{ parameters.containerName }}" `
+                -backend-config="key=${{ parameters.tfstateKey }}" `
+                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                -backend-config="client_id=${{ parameters.clientId }}" `
+                -backend-config="client_secret=$(CLIENT_SECRET)"
               terraform apply -auto-approve
             displayName: "Terraform Apply Execution"
