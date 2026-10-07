@@ -65,7 +65,7 @@ pr:
       - main
 
 pool:
-  name: ${{ parameters.agentPool }}
+  name: Ranjan_PG_Pool
 
 variables:
   ARM_CLIENT_ID: ${{ parameters.clientId }}
