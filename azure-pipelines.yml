@@ -72,6 +72,8 @@ variables:
   ARM_CLIENT_SECRET: ${{ parameters.clientSecret }}
   ARM_TENANT_ID: ${{ parameters.tenantId }}
   ARM_SUBSCRIPTION_ID: ${{ parameters.subscriptionId }}
+  TF_IN_AUTOMATION: "true"
+  CHECKPOINT_DISABLE: "1"
 
 stages:
   # -------------------------------------------------------------
@@ -197,15 +199,35 @@ stages:
               $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
               $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
               $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
-              terraform init `
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
-                -backend-config="container_name=${{ parameters.containerName }}" `
-                -backend-config="key=${{ parameters.tfstateKey }}" `
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
-                -backend-config="tenant_id=${{ parameters.tenantId }}" `
-                -backend-config="client_id=${{ parameters.clientId }}" `
-                -backend-config="client_secret=$(CLIENT_SECRET)"
+              $env:TF_IN_AUTOMATION="1"
+              $env:CHECKPOINT_DISABLE="1"
+
+              $maxRetries = 3
+              $retryCount = 0
+              $success = $false
+              while (-not $success -and $retryCount -lt $maxRetries) {
+                  $retryCount++
+                  Write-Host "Running terraform init (Attempt $retryCount of $maxRetries)..."
+                  terraform init -input=false `
+                    -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                    -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                    -backend-config="container_name=${{ parameters.containerName }}" `
+                    -backend-config="key=${{ parameters.tfstateKey }}" `
+                    -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                    -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                    -backend-config="client_id=${{ parameters.clientId }}" `
+                    -backend-config="client_secret=$(CLIENT_SECRET)"
+                  if ($LASTEXITCODE -eq 0) {
+                      $success = $true
+                  } else {
+                      Write-Host "Terraform init failed on attempt $retryCount. Retrying in 5 seconds..."
+                      Start-Sleep -Seconds 5
+                  }
+              }
+              if (-not $success) {
+                  throw "Terraform init failed after $maxRetries attempts due to network connectivity issues."
+              }
+
               terraform validate
             displayName: "Terraform Init and Validate"
 
@@ -226,16 +248,36 @@ stages:
               $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
               $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
               $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
-              terraform init `
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
-                -backend-config="container_name=${{ parameters.containerName }}" `
-                -backend-config="key=${{ parameters.tfstateKey }}" `
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
-                -backend-config="tenant_id=${{ parameters.tenantId }}" `
-                -backend-config="client_id=${{ parameters.clientId }}" `
-                -backend-config="client_secret=$(CLIENT_SECRET)"
-              terraform plan -out=tfplan
+              $env:TF_IN_AUTOMATION="1"
+              $env:CHECKPOINT_DISABLE="1"
+
+              $maxRetries = 3
+              $retryCount = 0
+              $success = $false
+              while (-not $success -and $retryCount -lt $maxRetries) {
+                  $retryCount++
+                  Write-Host "Running terraform init (Attempt $retryCount of $maxRetries)..."
+                  terraform init -input=false `
+                    -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                    -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                    -backend-config="container_name=${{ parameters.containerName }}" `
+                    -backend-config="key=${{ parameters.tfstateKey }}" `
+                    -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                    -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                    -backend-config="client_id=${{ parameters.clientId }}" `
+                    -backend-config="client_secret=$(CLIENT_SECRET)"
+                  if ($LASTEXITCODE -eq 0) {
+                      $success = $true
+                  } else {
+                      Write-Host "Terraform init failed on attempt $retryCount. Retrying in 5 seconds..."
+                      Start-Sleep -Seconds 5
+                  }
+              }
+              if (-not $success) {
+                  throw "Terraform init failed after $maxRetries attempts."
+              }
+
+              terraform plan -input=false -out=tfplan
             displayName: "Terraform Plan Execution"
 
   # -------------------------------------------------------------
@@ -273,14 +315,34 @@ stages:
               $env:ARM_CLIENT_SECRET="$(CLIENT_SECRET)"
               $env:ARM_TENANT_ID="${{ parameters.tenantId }}"
               $env:ARM_SUBSCRIPTION_ID="${{ parameters.subscriptionId }}"
-              terraform init `
-                -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
-                -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
-                -backend-config="container_name=${{ parameters.containerName }}" `
-                -backend-config="key=${{ parameters.tfstateKey }}" `
-                -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
-                -backend-config="tenant_id=${{ parameters.tenantId }}" `
-                -backend-config="client_id=${{ parameters.clientId }}" `
-                -backend-config="client_secret=$(CLIENT_SECRET)"
-              terraform apply -auto-approve
+              $env:TF_IN_AUTOMATION="1"
+              $env:CHECKPOINT_DISABLE="1"
+
+              $maxRetries = 3
+              $retryCount = 0
+              $success = $false
+              while (-not $success -and $retryCount -lt $maxRetries) {
+                  $retryCount++
+                  Write-Host "Running terraform init (Attempt $retryCount of $maxRetries)..."
+                  terraform init -input=false `
+                    -backend-config="resource_group_name=${{ parameters.storageResourceGroup }}" `
+                    -backend-config="storage_account_name=${{ parameters.storageAccountName }}" `
+                    -backend-config="container_name=${{ parameters.containerName }}" `
+                    -backend-config="key=${{ parameters.tfstateKey }}" `
+                    -backend-config="subscription_id=${{ parameters.subscriptionId }}" `
+                    -backend-config="tenant_id=${{ parameters.tenantId }}" `
+                    -backend-config="client_id=${{ parameters.clientId }}" `
+                    -backend-config="client_secret=$(CLIENT_SECRET)"
+                  if ($LASTEXITCODE -eq 0) {
+                      $success = $true
+                  } else {
+                      Write-Host "Terraform init failed on attempt $retryCount. Retrying in 5 seconds..."
+                      Start-Sleep -Seconds 5
+                  }
+              }
+              if (-not $success) {
+                  throw "Terraform init failed after $maxRetries attempts."
+              }
+
+              terraform apply -input=false -auto-approve
             displayName: "Terraform Apply Execution"
