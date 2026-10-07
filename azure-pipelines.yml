@@ -1,5 +1,5 @@
-# Azure DevOps Multi-Stage Terraform Pipeline with Parameters
-# Workflow matching DAG: [tflint, tfsec, Infracost, Gitleaks] -> Init&Validate -> Plan -> Manual Approval -> Apply
+# Azure DevOps Multi-Stage Terraform Pipeline configured for MAIN branch
+# Workflow DAG: [tflint, tfsec, Infracost, Gitleaks] -> Init&Validate -> Plan -> Manual Approval -> Apply
 
 parameters:
   - name: agentPool
@@ -56,8 +56,6 @@ trigger:
   branches:
     include:
       - main
-      - feature/*
-      - feature-*
 
 pr:
   branches:
@@ -298,12 +296,12 @@ stages:
               onTimeout: 'reject'
 
   # -------------------------------------------------------------
-  # STAGE 8: Apply (Triggers on main branch)
+  # STAGE 8: Apply
   # -------------------------------------------------------------
   - stage: Apply
     displayName: "Apply"
     dependsOn: Manual_Approval
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    condition: succeeded()
     jobs:
       - job: apply_job
         displayName: "Terraform Apply"
