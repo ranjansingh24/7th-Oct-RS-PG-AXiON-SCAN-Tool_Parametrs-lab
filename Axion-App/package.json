@@ -1,0 +1,13 @@
+{
+  "name": "axion-intelligence-platform",
+  "version": "1.0.0",
+  "description": "Agentic AI-driven predictive maintenance and real-time telemetry analytics platform",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

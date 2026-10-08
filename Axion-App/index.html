@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Axion Intelligence Platform | Secure Portal</title>
+    <meta name="description" content="Agentic AI-driven predictive maintenance and real-time telemetry analytics for global industrial operations.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome / Lucide Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Background Animated Glow Orbs -->
+    <div class="bg-glow">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- MAIN LOGIN VIEW -->
+    <div id="login-view" class="view-container active">
+        <div class="brand-top">
+            <div class="brand-logo">
+                <i class="fa-solid fa-cube logo-icon"></i>
+                <span>AXION</span>
+            </div>
+        </div>
+
+        <main class="hero-split">
+            <!-- Left Hero Content -->
+            <section class="hero-left">
+                <h1 class="platform-title">
+                    Axion Intelligence <br>
+                    <span class="gradient-text">Platform</span>
+                </h1>
+                
+                <p class="hero-subtitle">
+                    Agentic AI-driven predictive maintenance and real-time telemetry analytics for global industrial operations.
+                </p>
+
+                <!-- 6 Feature Cards Grid -->
+                <div class="features-grid">
+                    <div class="feature-card" data-feature="agentic">
+                        <div class="feature-icon icon-blue">
+                            <i class="fa-solid fa-robot"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Agentic AI</h3>
+                            <p>Autonomous anomaly detection.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" data-feature="predictive">
+                        <div class="feature-icon icon-purple">
+                            <i class="fa-solid fa-chart-line"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Predictive AI</h3>
+                            <p>Stop failures before they occur.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" data-feature="global">
+                        <div class="feature-icon icon-emerald">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Global Scale</h3>
+                            <p>Manage millions of IoT sensors.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" data-feature="zerotrust">
+                        <div class="feature-icon icon-cyan">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Zero-Trust</h3>
+                            <p>End-to-end encrypted telemetry.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" data-feature="digitaltwin">
+                        <div class="feature-icon icon-sky">
+                            <i class="fa-solid fa-microchip"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Digital Twin</h3>
+                            <p>Real-time physical simulation.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-card" data-feature="edge">
+                        <div class="feature-icon icon-amber">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+                        <div class="feature-info">
+                            <h3>Real-Time Edge</h3>
+                            <p>Sub-millisecond processing.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Login Form Card -->
+            <section class="hero-right">
+                <div class="login-card">
+                    <div class="card-header">
+                        <h2>Welcome Back</h2>
+                        <p>Securely sign in to access your enterprise dashboard and live telemetry.</p>
+                    </div>
+
+                    <form id="auth-form" onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label for="email">ENTERPRISE EMAIL</label>
+                            <div class="input-wrapper">
+                                <i class="fa-regular fa-envelope input-icon"></i>
+                                <input type="email" id="email" placeholder="Enter your email" required value="ranjan@axion.ai">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="password">PASSWORD</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-lock input-icon"></i>
+                                <input type="password" id="password" placeholder="••••••••••••" required value="P@ssw0rd123456!">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility()">
+                                    <i class="fa-regular fa-eye" id="eye-icon"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-options">
+                            <label class="checkbox-container">
+                                <input type="checkbox" checked>
+                                <span class="checkmark"></span>
+                                Remember this device
+                            </label>
+                            <a href="#" onclick="showForgotPassword(event)" class="forgot-link">Forgot password?</a>
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="btn-submit">
+                            <span>Secure Sign In</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+
+                    <div class="card-footer">
+                        <div class="db-status-pill">
+                            <span class="status-dot online"></span>
+                            <span>Azure PostgreSQL: <strong>axion-postgres-ranjan</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- DASHBOARD VIEW (POST LOGIN) -->
+    <div id="dashboard-view" class="view-container">
+        <!-- Top Navigation -->
+        <header class="navbar">
+            <div class="nav-left">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-cube logo-icon"></i>
+                    <span>AXION</span>
+                    <span class="badge-live">LIVE TELEMETRY</span>
+                </div>
+            </div>
+
+            <div class="nav-center">
+                <div class="nav-tabs">
+                    <button class="tab-btn active"><i class="fa-solid fa-chart-pie"></i> Overview</button>
+                    <button class="tab-btn"><i class="fa-solid fa-database"></i> PostgreSQL Nodes</button>
+                    <button class="tab-btn"><i class="fa-solid fa-network-wired"></i> IoT Clusters</button>
+                    <button class="tab-btn"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</button>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <div class="db-badge">
+                    <i class="fa-solid fa-server"></i>
+                    <span>axion_db (PostgreSQL 14)</span>
+                    <span class="status-indicator"></span>
+                </div>
+                <div class="user-profile">
+                    <img src="https://ui-avatars.com/api/?name=Ranjan+Singh&background=6366f1&color=fff" alt="User Avatar" class="avatar">
+                    <span class="user-name">Ranjan Singh</span>
+                    <button onclick="handleLogout()" class="btn-logout" title="Sign Out">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="dashboard-content">
+            <!-- Metrics Row -->
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>ACTIVE IOT SENSORS</span>
+                        <i class="fa-solid fa-globe icon-blue"></i>
+                    </div>
+                    <div class="metric-value" id="val-sensors">1,482,920</div>
+                    <div class="metric-footer trend-up">
+                        <i class="fa-solid fa-arrow-trend-up"></i> +4.2% from last hour
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>SYSTEM HEALTH</span>
+                        <i class="fa-solid fa-heart-pulse icon-emerald"></i>
+                    </div>
+                    <div class="metric-value">99.98%</div>
+                    <div class="metric-footer trend-neutral">
+                        <i class="fa-solid fa-check"></i> All clusters operational
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>ACTIVE ANOMALIES</span>
+                        <i class="fa-solid fa-shield-cat icon-purple"></i>
+                    </div>
+                    <div class="metric-value">0</div>
+                    <div class="metric-footer trend-up">
+                        <i class="fa-solid fa-shield-check"></i> Agentic AI auto-resolved 12
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span>POSTGRES LATENCY</span>
+                        <i class="fa-solid fa-bolt icon-amber"></i>
+                    </div>
+                    <div class="metric-value" id="val-latency">14 ms</div>
+                    <div class="metric-footer trend-up">
+                        <i class="fa-solid fa-database"></i> B_Standard_B1ms (Central US)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Body Split -->
+            <div class="dash-grid">
+                <!-- Main Telemetry Chart -->
+                <div class="dash-card chart-card">
+                    <div class="card-title-bar">
+                        <h3><i class="fa-solid fa-wave-square"></i> Real-Time Agentic Telemetry Analytics</h3>
+                        <div class="chart-controls">
+                            <span class="live-dot pulse"></span>
+                            <span class="live-label">LIVE STREAM</span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="telemetryChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Industrial Nodes & Database Stream -->
+                <div class="dash-card nodes-card">
+                    <div class="card-title-bar">
+                        <h3><i class="fa-solid fa-server"></i> Active Infrastructure Nodes</h3>
+                        <span class="badge-count">5 Nodes Active</span>
+                    </div>
+
+                    <div class="nodes-list">
+                        <div class="node-item">
+                            <div class="node-status status-online"></div>
+                            <div class="node-details">
+                                <span class="node-name">axion-postgres-ranjan</span>
+                                <span class="node-sub">PostgreSQL 14 Flexible Server</span>
+                            </div>
+                            <span class="node-badge badge-primary">Database</span>
+                        </div>
+
+                        <div class="node-item">
+                            <div class="node-status status-online"></div>
+                            <div class="node-details">
+                                <span class="node-name">vm-netflix-1</span>
+                                <span class="node-sub">Ubuntu 22.04 LTS (Standard_D2s_v6)</span>
+                            </div>
+                            <span class="node-badge">App Server</span>
+                        </div>
+
+                        <div class="node-item">
+                            <div class="node-status status-online"></div>
+                            <div class="node-details">
+                                <span class="node-name">bastionforchapra</span>
+                                <span class="node-sub">Azure Bastion Security Gateway</span>
+                            </div>
+                            <span class="node-badge">Gateway</span>
+                        </div>
+
+                        <div class="node-item">
+                            <div class="node-status status-online"></div>
+                            <div class="node-details">
+                                <span class="node-name">vnet-dev / subnet-pool-netflix</span>
+                                <span class="node-sub">10.0.0.0/24 Subnet Cluster</span>
+                            </div>
+                            <span class="node-badge">Network</span>
+                        </div>
+                    </div>
+
+                    <div class="query-box">
+                        <div class="query-header">
+                            <i class="fa-solid fa-terminal"></i>
+                            <span>LIVE AZURE POSTGRES METRICS</span>
+                        </div>
+                        <pre class="query-code"><code>SELECT dbname, numbackends, xact_commit, blks_read 
+FROM pg_stat_database 
+WHERE datname = 'axion_db';
+
+Status: CONNECTED (SSL Mode: Require)</code></pre>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Feature Detail Modal -->
+    <div id="feature-modal" class="modal-backdrop" onclick="closeModal(event)">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal(null)"><i class="fa-solid fa-xmark"></i></button>
+            <div class="modal-icon" id="modal-icon"></div>
+            <h3 id="modal-title">Feature Name</h3>
+            <p id="modal-desc">Feature description goes here.</p>
+            <div class="modal-details" id="modal-details"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
